@@ -2,15 +2,7 @@ name: Build geoip.dat
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 4"
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "README.md"
-      - ".gitignore"
-      - "LICENSE"
-      - "**/dependabot.yml"
+    - cron: "30 0 */3 * *"
 jobs:
   build:
     name: Build
@@ -18,30 +10,34 @@ jobs:
     steps:
       - name: Checkout codebase
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Loyalsoldier/geoip
+        uses: actions/checkout@v4
+        with:
+          repository: Loyalsoldier/geoip
+          path: geoip
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: ./geoip/go.mod
+          cache-dependency-path: ./geoip/go.sum
 
       - name: Set variables
         run: |
-          echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
-          echo "RELEASE_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "TAG_NAME=geoip-release" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Geoip Release" >> $GITHUB_ENV
         shell: bash
-
-      - name: Get GeoLite2
-        env:
-          LICENSE_KEY: ${{ secrets.MAXMIND_LICEHSE }}
-        run: |
-          curl -L "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country-CSV&license_key=${LICENSE_KEY}&suffix=zip" -o GeoLite2-Country-CSV.zip
-          unzip GeoLite2-Country-CSV.zip
-          rm -f GeoLite2-Country-CSV.zip
-          mv GeoLite2* geolite2
 
       - name: Build geoip.dat
         run: |
-          go run ./
+          cd geoip || exit 1
+          go build ./
+          ./geoip convert -c ../config.json
+          cp -r output ..
+          cd ../ && rm -rf geoip
 
       - name: Generate sha256 checksum for dat files
         run: |
@@ -56,22 +52,20 @@ jobs:
           git init
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b release
-          git add -A
-          git commit -m "${{ env.RELEASE_NAME }}"
-          git remote add geoip "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          git push -f geoip release
+          git remote remove origin || true
+          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          if git ls-remote --exit-code origin release; then
+            git push --delete origin release
+          fi
+          git checkout --orphan release
 
-      - name: Release and upload assets
+          git add geoip.dat geoip.dat.sha256sum
+          git commit -m "${{ env.RELEASE_NAME }}"
+
+          git push -f origin release
+
+      - name: Upload assets to release
         run: |
-          gh release create ${{ env.TAG_NAME }} -t ${{ env.RELEASE_NAME }} \
-            ./output/geoip.dat \
-            ./output/geoip.dat.sha256sum \
-            ./output/geoip-only-cn-private.dat \
-            ./output/geoip-only-cn-private.dat.sha256sum \
-            ./output/cn.dat \
-            ./output/cn.dat.sha256sum \
-            ./output/private.dat \
-            ./output/private.dat.sha256sum
+          gh release upload ${{ env.TAG_NAME }} ./output/geoip.dat ./output/geoip.dat.sha256sum --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

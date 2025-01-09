@@ -1,21 +1,32 @@
 {
   "input": [
     {
-      "type": "maxmindGeoLite2CountryCSV",
+      "type": "v2rayGeoIPDat",
       "action": "add",
       "args": {
-        "country": "./geolite2/GeoLite2-Country-Locations-en.csv",
-        "ipv4": "./geolite2/GeoLite2-Country-Blocks-IPv4.csv",
-        "ipv6": "./geolite2/GeoLite2-Country-Blocks-IPv6.csv"
+        "uri": "https://github.com/runetfreedom/russia-blocked-geoip/raw/release/geoip.dat",
+        "wantedList": [
+          "ru",
+          "private",
+          "google"
+        ]
       }
     },
     {
-      "type": "private",
-      "action": "add"
+      "type": "text",
+      "action": "add",
+      "args": {
+        "name": "ru-blocked",
+        "uri": "https://community.antifilter.download/list/community.lst"
+      }
     },
     {
-      "type": "test",
-      "action": "add"
+      "type": "text",
+      "action": "add",
+      "args": {
+        "name": "ru-blocked",
+        "uri": "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/refs/heads/main/ipsum.lst"
+      }
     }
   ],
   "output": [
@@ -25,31 +36,6 @@
       "args": {
         "outputDir": "./output",
         "outputName": "geoip.dat"
-      }
-    },
-    {
-      "type": "v2rayGeoIPDat",
-      "action": "output",
-      "args": {
-        "outputDir": "./output",
-        "outputName": "geoip-only-cn-private.dat",
-        "wantedList": ["cn", "private"]
-      }
-    },
-    {
-      "type": "v2rayGeoIPDat",
-      "action": "output",
-      "args": {
-        "outputDir": "./output",
-        "oneFilePerList": true,
-        "wantedList": ["cn", "private", "test"]
-      }
-    },
-    {
-      "type": "v2rayGeoIPDat",
-      "action": "output",
-      "args": {
-        "oneFilePerList": true
       }
     },
     {
