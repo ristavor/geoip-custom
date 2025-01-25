@@ -19,7 +19,7 @@ jobs:
           repository: Loyalsoldier/geoip
           path: geoip
 
-      - name: Set up Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: ./geoip/go.mod
@@ -31,7 +31,7 @@ jobs:
           echo "RELEASE_NAME=Geoip Release" >> $GITHUB_ENV
         shell: bash
 
-      - name: Build geoip.dat
+      - name: Build GeoIP files
         run: |
           cd geoip || exit 1
           go build ./
