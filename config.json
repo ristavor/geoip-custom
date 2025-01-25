@@ -1,7 +1,7 @@
 {
   "input": [
     {
-      "type": "dbipCountryMMDB",
+      "type": "v2rayGeoIPDat",
       "action": "add",
       "args": {
         "uri": "https://github.com/runetfreedom/russia-blocked-geoip/raw/release/geoip.dat",
